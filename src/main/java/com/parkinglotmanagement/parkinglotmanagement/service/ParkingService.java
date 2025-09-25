@@ -14,6 +14,8 @@ import com.parkinglotmanagement.parkinglotmanagement.model.Slot;
 import com.parkinglotmanagement.parkinglotmanagement.repository.FloorRepository;
 import com.parkinglotmanagement.parkinglotmanagement.repository.ReservationRepository;
 import com.parkinglotmanagement.parkinglotmanagement.repository.SlotRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class ParkingService {
@@ -75,16 +77,13 @@ public class ParkingService {
         reservationRepository.deleteById(reservationId);
     }
 
-    public List<Slot> getAvailableSlots(LocalDateTime startTime, LocalDateTime endTime) {
-        List<Slot> allSlots = slotRepository.findAll();
-        List<Reservation> allOverlappingReservations = allSlots.parallelStream()
-            .flatMap(slot -> reservationRepository.findOverlappingReservations(slot.getId(), startTime, endTime).stream())
-            .collect(Collectors.toList());
-        List<Long> occupiedSlotIds = allOverlappingReservations.stream()
-            .map(reservation -> reservation.getSlot().getId())
-            .collect(Collectors.toList());
-        return allSlots.stream()
-            .filter(slot -> !occupiedSlotIds.contains(slot.getId()))
-            .collect(Collectors.toList());
+   public Page<Slot> getAvailableSlots(LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
+    List<Long> occupiedSlotIds = reservationRepository.findOccupiedSlotIds(startTime, endTime);
+
+    if (occupiedSlotIds.isEmpty()) {
+        return slotRepository.findAll(pageable);
+    } else {
+        return slotRepository.findByIdNotIn(occupiedSlotIds, pageable);
     }
+}
 }
