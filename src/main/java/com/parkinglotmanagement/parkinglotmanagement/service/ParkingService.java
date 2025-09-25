@@ -1,13 +1,19 @@
-package com.example.demo.service;
+package com.parkinglotmanagement.parkinglotmanagement.service;
 
-import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.model.*;
-import com.example.demo.repository.*;
-import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.parkinglotmanagement.parkinglotmanagement.exception.ResourceNotFoundException;
+import com.parkinglotmanagement.parkinglotmanagement.model.ParkingFloor;
+import com.parkinglotmanagement.parkinglotmanagement.model.Reservation;
+import com.parkinglotmanagement.parkinglotmanagement.model.Slot;
+import com.parkinglotmanagement.parkinglotmanagement.repository.FloorRepository;
+import com.parkinglotmanagement.parkinglotmanagement.repository.ReservationRepository;
+import com.parkinglotmanagement.parkinglotmanagement.repository.SlotRepository;
 
 @Service
 public class ParkingService {

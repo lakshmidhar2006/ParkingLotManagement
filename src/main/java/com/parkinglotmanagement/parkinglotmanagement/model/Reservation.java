@@ -1,4 +1,4 @@
-package com.example.demo.model;
+package com.parkinglotmanagement.parkinglotmanagement.model;
 
 import java.time.LocalDateTime;
 

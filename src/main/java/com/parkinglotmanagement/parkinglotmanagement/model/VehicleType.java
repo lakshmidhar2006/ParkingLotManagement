@@ -1,4 +1,4 @@
-package com.example.demo.model;
+package com.parkinglotmanagement.parkinglotmanagement.model;
 
 public enum VehicleType {
     FOUR_WHEELER(30.0),
