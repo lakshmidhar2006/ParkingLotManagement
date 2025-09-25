@@ -1,20 +1,33 @@
 package com.parkinglotmanagement.parkinglotmanagement.controller;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.parkinglotmanagement.parkinglotmanagement.dto.ReservationRequestDTO;
 import com.parkinglotmanagement.parkinglotmanagement.model.ParkingFloor;
 import com.parkinglotmanagement.parkinglotmanagement.model.Reservation;
 import com.parkinglotmanagement.parkinglotmanagement.model.Slot;
 import com.parkinglotmanagement.parkinglotmanagement.repository.SlotRepository;
 import com.parkinglotmanagement.parkinglotmanagement.service.ParkingService;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Parking API", description = "Endpoints for Parking Lot Management")
 public class ParkingController {
 
     private final ParkingService parkingService;
@@ -25,34 +38,32 @@ public class ParkingController {
         this.slotRepository = slotRepository;
     }
 
-    // 3.1. POST /floors – Create a parking floor
     @PostMapping("/floors")
+    @Operation(summary = "Create a parking floor", description = "Creates a new parking floor")
     public ResponseEntity<ParkingFloor> createFloor(@RequestBody ParkingFloor floor) {
         return ResponseEntity.ok(parkingService.createFloor(floor));
     }
 
-    // 3.2. POST /slots – Create parking slots for a floor
     @PostMapping("/slots")
+    @Operation(summary = "Create a parking slot", description = "Creates a new slot for a specific floor")
     public ResponseEntity<Slot> createSlot(@RequestParam Long floorId, @RequestBody Slot slot) {
         return ResponseEntity.ok(parkingService.createSlot(floorId, slot));
     }
 
-    // 3.4. GET /availability – List available slots for a given time range
     @GetMapping("/availability")
+    @Operation(summary = "Get available slots", description = "Lists available slots for a given time range")
     public ResponseEntity<List<Slot>> getAvailableSlots(
-            @RequestParam LocalDateTime startTime,
-            @RequestParam LocalDateTime endTime) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         return ResponseEntity.ok(parkingService.getAvailableSlots(startTime, endTime));
     }
 
-    // 3.3. POST /reserve – Reserve a slot for a given time range
     @PostMapping("/reserve")
+    @Operation(summary = "Reserve a slot", description = "Reserves a parking slot for a given time range")
     public ResponseEntity<Reservation> reserveSlot(@Valid @RequestBody ReservationRequestDTO requestDTO) {
-        // Find the actual Slot entity from the database using the ID from the request
         Slot slot = slotRepository.findById(requestDTO.getSlotId())
                 .orElseThrow(() -> new RuntimeException("Slot not found with id: " + requestDTO.getSlotId()));
 
-        // Convert the DTO to a Reservation entity
         Reservation reservation = new Reservation();
         reservation.setSlot(slot);
         reservation.setStartTime(requestDTO.getStartTime());
@@ -60,21 +71,20 @@ public class ParkingController {
         reservation.setVehicleNumber(requestDTO.getVehicleNumber());
         reservation.setVehicleType(requestDTO.getVehicleType());
 
-        // Call the service to perform the reservation logic
         Reservation createdReservation = parkingService.reserveSlot(reservation);
         return ResponseEntity.ok(createdReservation);
     }
 
-    // 3.5. GET /reservations/{id} – Fetch reservation details
     @GetMapping("/reservations/{id}")
+    @Operation(summary = "Get reservation details", description = "Fetches reservation details by ID")
     public ResponseEntity<Reservation> getReservationDetails(@PathVariable Long id) {
         return ResponseEntity.ok(parkingService.getReservationDetails(id));
     }
 
-    // 3.6. DELETE /reservations/{id} – Cancel a reservation
     @DeleteMapping("/reservations/{id}")
+    @Operation(summary = "Cancel a reservation", description = "Cancels a reservation by ID")
     public ResponseEntity<Void> cancelReservation(@PathVariable Long id) {
         parkingService.cancelReservation(id);
-        return ResponseEntity.noContent().build(); // Return 204 No Content on successful deletion
+        return ResponseEntity.noContent().build();
     }
 }
