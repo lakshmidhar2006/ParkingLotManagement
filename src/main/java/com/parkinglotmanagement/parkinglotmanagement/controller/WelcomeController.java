@@ -14,7 +14,7 @@ public class WelcomeController {
                        <h1>Welcome to the Parking Lot Management API</h1>
                        <p>This is the backend service for the Valcare assignment.</p>
                        <p>You can access the API documentation here:</p>
-                       <a href='/swagger-ui.html'>/swagger-ui.html</a>
+                       <a href='/swagger-ui/index.html'>/swagger-ui.html</a>
                    </body>
                </html>
                """;
