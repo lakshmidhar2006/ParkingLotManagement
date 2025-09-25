@@ -1,8 +1,8 @@
-package com.example.demo.repository;
+package com.parkinglotmanagement.parkinglotmanagement.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.demo.model.ParkingFloor;
+import com.parkinglotmanagement.parkinglotmanagement.model.ParkingFloor;
 
 public interface FloorRepository extends JpaRepository<ParkingFloor, Long> {
 }
