@@ -21,4 +21,4 @@ RUN ./mvnw package -DskipTests
 EXPOSE 8080
 
 # The command to run the application
-CMD ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
+CMD ["java", "-jar", "target/parkinglotmanagement-0.0.1-SNAPSHOT.jar"]
