@@ -1,10 +1,9 @@
 package com.parkinglotmanagement.parkinglotmanagement.controller;
 
-import com.parkinglotmanagement.parkinglotmanagement.model.ParkingFloor;
-import com.parkinglotmanagement.parkinglotmanagement.model.Reservation; 
-import com.parkinglotmanagement.parkinglotmanagement.model.Slot;    
+import com.parkinglotmanagement.parkinglotmanagement.dto.FloorDTO;
+import com.parkinglotmanagement.parkinglotmanagement.dto.ReservationRequestDTO;
+import com.parkinglotmanagement.parkinglotmanagement.dto.ReservationResponseDTO;
 import com.parkinglotmanagement.parkinglotmanagement.model.VehicleType;
-import com.parkinglotmanagement.parkinglotmanagement.repository.SlotRepository; 
 import com.parkinglotmanagement.parkinglotmanagement.service.ParkingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -25,18 +24,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ParkingController.class)
+@WebMvcTest({ParkingController.class, WelcomeController.class}) // Test both controllers
 class ParkingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private ParkingService parkingService;
-
-    @MockBean
-    
-    private SlotRepository slotRepository; // This is also needed by the controller
+    private ParkingService parkingService; // Controller only depends on the service
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -45,37 +40,29 @@ class ParkingControllerTest {
         objectMapper.registerModule(new JavaTimeModule());
     }
 
-
     @Test
-    void whenCreateFloor_thenReturns200() throws Exception {
-        ParkingFloor floor = new ParkingFloor();
-        floor.setId(1L);
-        floor.setFloorNumber(1);
+    void whenCreateFloor_thenReturns201() throws Exception {
+        FloorDTO floorRequest = new FloorDTO(null, 1);
+        FloorDTO floorResponse = new FloorDTO(1L, 1);
 
-        when(parkingService.createFloor(any(ParkingFloor.class))).thenReturn(floor);
+        when(parkingService.createFloor(any(FloorDTO.class))).thenReturn(floorResponse);
 
         mockMvc.perform(post("/api/floors")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new ParkingFloor())))
-                .andExpect(status().isOk())
+                        .content(objectMapper.writeValueAsString(floorRequest)))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.floorNumber").value(1));
     }
 
     @Test
     void whenGetReservationDetails_withValidId_thenReturns200() throws Exception {
-        Slot testSlot = new Slot();
-        testSlot.setId(1L);
-        Reservation sampleReservation = new Reservation();
-        sampleReservation.setId(1L);
-        sampleReservation.setSlot(testSlot);
-        sampleReservation.setVehicleNumber("TS09AB1234");
-        sampleReservation.setVehicleType(VehicleType.TWO_WHEELER);
-        sampleReservation.setStartTime(LocalDateTime.of(2025, 9, 25, 10, 0));
-        sampleReservation.setEndTime(LocalDateTime.of(2025, 9, 25, 11, 0));
-        sampleReservation.setCost(20.0);
+        ReservationResponseDTO responseDTO = new ReservationResponseDTO(
+            1L, 1L, 101, LocalDateTime.now(), LocalDateTime.now().plusHours(2),
+            "TS09AB1234", VehicleType.TWO_WHEELER, 60.0
+        );
 
-        when(parkingService.getReservationDetails(1L)).thenReturn(sampleReservation);
+        when(parkingService.getReservationDetails(1L)).thenReturn(responseDTO);
         
         mockMvc.perform(get("/api/reservations/1"))
                 .andExpect(status().isOk())
@@ -85,12 +72,15 @@ class ParkingControllerTest {
 
     @Test
     void whenReserveSlot_withInvalidVehicleNumber_thenReturns400() throws Exception {
-        String invalidReservationJson = "{\"slotId\":1,\"startTime\":\"2025-10-20T10:00:00\",\"endTime\":\"2025-10-20T12:00:00\",\"vehicleNumber\":\"INVALID-123\",\"vehicleType\":\"FOUR_WHEELER\"}";
+        ReservationRequestDTO invalidRequest = new ReservationRequestDTO(
+            1L, LocalDateTime.now().plusHours(1), LocalDateTime.now().plusHours(2),
+            "INVALID-123", VehicleType.FOUR_WHEELER
+        );
 
         mockMvc.perform(post("/api/reserve")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(invalidReservationJson))
-                .andExpect(status().isBadRequest()); // Expect Bad Request due to validation failure
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -98,6 +88,6 @@ class ParkingControllerTest {
         doNothing().when(parkingService).cancelReservation(1L);
 
         mockMvc.perform(delete("/api/reservations/1"))
-                .andExpect(status().isNoContent()); // Expect 204 No Content
+                .andExpect(status().isNoContent());
     }
 }
