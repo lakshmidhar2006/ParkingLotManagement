@@ -1,86 +1,72 @@
 package com.parkinglotmanagement.parkinglotmanagement.controller;
 
-import java.time.LocalDateTime;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam; // ADD THIS IMPORT
-import org.springframework.web.bind.annotation.RestController;
-
+import com.parkinglotmanagement.parkinglotmanagement.dto.FloorDTO;
 import com.parkinglotmanagement.parkinglotmanagement.dto.ReservationRequestDTO;
-import com.parkinglotmanagement.parkinglotmanagement.model.ParkingFloor;
-import com.parkinglotmanagement.parkinglotmanagement.model.Reservation;
-import com.parkinglotmanagement.parkinglotmanagement.model.Slot;
-import com.parkinglotmanagement.parkinglotmanagement.repository.SlotRepository;
+import com.parkinglotmanagement.parkinglotmanagement.dto.ReservationResponseDTO;
+import com.parkinglotmanagement.parkinglotmanagement.dto.SlotDTO;
 import com.parkinglotmanagement.parkinglotmanagement.service.ParkingService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Parking API", description = "Endpoints for Parking Lot Management")
 public class ParkingController {
 
+    //  The controller only depends on the service layer.
     private final ParkingService parkingService;
-    private final SlotRepository slotRepository;
 
-    public ParkingController(ParkingService parkingService, SlotRepository slotRepository) {
+    public ParkingController(ParkingService parkingService) {
         this.parkingService = parkingService;
-        this.slotRepository = slotRepository;
     }
-
+    
     @PostMapping("/floors")
     @Operation(summary = "Create a parking floor", description = "Creates a new parking floor")
-    public ResponseEntity<ParkingFloor> createFloor(@RequestBody ParkingFloor floor) {
-        return ResponseEntity.ok(parkingService.createFloor(floor));
+    //  Using DTOs for request and response to decouple the API from the database schema.
+    public ResponseEntity<FloorDTO> createFloor(@RequestBody FloorDTO floorDTO) {
+        FloorDTO createdFloor = parkingService.createFloor(floorDTO);
+        return new ResponseEntity<>(createdFloor, HttpStatus.CREATED);
     }
 
-    @PostMapping("/slots")
+    //  Using more RESTful URL for nested resources.
+    @PostMapping("/floors/{floorId}/slots")
     @Operation(summary = "Create a parking slot", description = "Creates a new slot for a specific floor")
-    public ResponseEntity<Slot> createSlot(@RequestParam Long floorId, @RequestBody Slot slot) {
-        return ResponseEntity.ok(parkingService.createSlot(floorId, slot));
+    public ResponseEntity<SlotDTO> createSlot(@PathVariable Long floorId, @RequestBody SlotDTO slotDTO) {
+        SlotDTO createdSlot = parkingService.createSlot(floorId, slotDTO);
+        return new ResponseEntity<>(createdSlot, HttpStatus.CREATED);
     }
 
     @GetMapping("/availability")
     @Operation(summary = "Get available slots", description = "Lists available slots for a given time range with pagination")
-    public ResponseEntity<Page<Slot>> getAvailableSlots(
+    public ResponseEntity<Page<SlotDTO>> getAvailableSlots(
             @RequestParam LocalDateTime startTime,
             @RequestParam LocalDateTime endTime,
             Pageable pageable) {
-        Page<Slot> availableSlots = parkingService.getAvailableSlots(startTime, endTime, pageable);
+        Page<SlotDTO> availableSlots = parkingService.getAvailableSlots(startTime, endTime, pageable);
         return ResponseEntity.ok(availableSlots);
     }
 
     @PostMapping("/reserve")
     @Operation(summary = "Reserve a slot", description = "Reserves a parking slot for a given time range")
-    public ResponseEntity<Reservation> reserveSlot(@Valid @RequestBody ReservationRequestDTO requestDTO) {
-        Slot slot = slotRepository.findById(requestDTO.getSlotId())
-                .orElseThrow(() -> new RuntimeException("Slot not found with id: " + requestDTO.getSlotId()));
-
-        Reservation reservation = new Reservation();
-        reservation.setSlot(slot);
-        reservation.setStartTime(requestDTO.getStartTime());
-        reservation.setEndTime(requestDTO.getEndTime());
-        reservation.setVehicleNumber(requestDTO.getVehicleNumber());
-        reservation.setVehicleType(requestDTO.getVehicleType());
-
-        Reservation createdReservation = parkingService.reserveSlot(reservation);
-        return ResponseEntity.ok(createdReservation);
+    public ResponseEntity<ReservationResponseDTO> reserveSlot(@Valid @RequestBody ReservationRequestDTO requestDTO) {
+        // All logic is now handled by the service layer.
+        ReservationResponseDTO createdReservation = parkingService.reserveSlot(requestDTO);
+        return new ResponseEntity<>(createdReservation, HttpStatus.CREATED);
     }
 
     @GetMapping("/reservations/{id}")
     @Operation(summary = "Get reservation details", description = "Fetches reservation details by ID")
-    public ResponseEntity<Reservation> getReservationDetails(@PathVariable Long id) {
-        return ResponseEntity.ok(parkingService.getReservationDetails(id));
+    public ResponseEntity<ReservationResponseDTO> getReservationDetails(@PathVariable Long id) {
+        ReservationResponseDTO reservationDetails = parkingService.getReservationDetails(id);
+        return ResponseEntity.ok(reservationDetails);
     }
 
     @DeleteMapping("/reservations/{id}")
