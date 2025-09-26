@@ -8,10 +8,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import lombok.Data;
+import jakarta.validation.constraints.Pattern; 
+import lombok.AllArgsConstructor;
+import lombok.Data;  
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor 
+@NoArgsConstructor  
 public class ReservationRequestDTO {
 
     @NotNull(message = "Slot ID cannot be null")
@@ -21,13 +25,13 @@ public class ReservationRequestDTO {
     @NotNull(message = "Start time cannot be null")
     @Future(message = "Start time must be in the future")
     @Schema(description = "Reservation start time (must be in the future)", 
-            example = "2025-09-25T15:00:00", required = true)
+            example = "2025-09-26T15:00:00", required = true)
     private LocalDateTime startTime;
 
     @NotNull(message = "End time cannot be null")
     @Future(message = "End time must be in the future")
     @Schema(description = "Reservation end time (must be in the future)", 
-            example = "2025-09-25T18:00:00", required = true)
+            example = "2025-09-26T18:00:00", required = true)
     private LocalDateTime endTime;
 
     @NotBlank(message = "Vehicle number cannot be blank")
@@ -37,6 +41,6 @@ public class ReservationRequestDTO {
     private String vehicleNumber;
 
     @NotNull(message = "Vehicle type cannot be null")
-    @Schema(description = "Type of the vehicle (CAR, BIKE, etc.)", example = "CAR", required = true)
+    @Schema(description = "Type of the vehicle (FOUR_WHEELER, TWO_WHEELER, etc.)", example = "FOUR_WHEELER", required = true)
     private VehicleType vehicleType;
 }
