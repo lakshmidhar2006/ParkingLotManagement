@@ -1,6 +1,6 @@
 # Parking Lot Reservation System
 
-A complete backend REST API for a smart parking lot reservation system, built with Java and Spring Boot. This project allows for the management of parking infrastructure and handles the entire customer reservation lifecycle, from booking to cancellation.
+A complete backend REST API for a smart parking lot reservation system, built with Java and Spring Boot. This project allows for the management of parking infrastructure and handles the entire customer reservation lifecycle, from booking to cancellation, with a full authentication and role-based authorization system.
 
 **[➡️ View Live Demo](https://parkinglotmanagement-1.onrender.com)**
 
@@ -8,19 +8,19 @@ A complete backend REST API for a smart parking lot reservation system, built wi
 
 ## Features
 
+* **Authentication & Authorization:** Secure endpoints with a full login/signup system and role-based access control (`USER` vs. `PARKING_LOT_MANAGER`).
 * **Full CRUD Functionality:** Endpoints for managing floors, slots, and reservations.
-* **Intelligent Booking Logic:** Prevents double bookings and dynamically calculates fees based on vehicle type and duration (with partial hours rounded up).
-* **Extensible Design:** Easily supports new vehicle types and rate changes via a centralized Enum.
+* **Intelligent Booking Logic:** Prevents double bookings and dynamically calculates fees based on vehicle type and duration.
 * **Concurrent Booking Protection:** Implemented optimistic locking (`@Version`) to safely handle simultaneous reservation attempts.
 * **API Documentation:** Automatically generated, interactive API documentation using Swagger/OpenAPI.
 * **Pagination & Sorting:** Efficiently handles large datasets on the availability endpoint.
-* **Robust Error Handling:** A global exception handler provides clear, consistent error responses for various scenarios.
+* **Robust Error Handling:** A global exception handler provides clear, consistent error responses.
 * **Data Validation:** Uses Jakarta Bean Validation to ensure the integrity of all incoming data.
 
 ## Tech Stack
 
 * **Language:** Java 21
-* **Framework:** Spring Boot 3+
+* **Framework:** Spring Boot 3+, Spring Security
 * **Data:** Spring Data JPA, Hibernate
 * **Database:** PostgreSQL
 * **Build Tool:** Maven
@@ -39,25 +39,36 @@ Interactive API documentation is available through Swagger UI. This allows you t
 
 The base URL for the deployed application is `https://parkinglotmanagement-1.onrender.com`.
 
-| Method | Endpoint                      | Description                               |
-| :----- | :---------------------------- | :---------------------------------------- |
-| `POST` | `/api/floors`                 | Creates a new parking floor.              |
-| `POST` | `/api/floors/{floorId}/slots` | Creates a new slot on a specific floor.   |
-| `POST` | `/api/reserve`                | Creates a new reservation.                |
-| `GET`  | `/api/availability`           | Gets available slots for a time range.    |
-| `GET`  | `/api/reservations/{id}`      | Retrieves a specific reservation.         |
-| `DELETE`| `/api/reservations/{id}`      | Cancels a specific reservation.           |
+### Authentication Endpoints (Public)
+
+| Method | Endpoint             | Description              |
+| :----- | :------------------- | :----------------------- |
+| `POST` | `/api/auth/register` | Registers a new user.    |
+| `POST` | `/api/auth/login`    | Logs in a user.          |
+
+### Parking Management Endpoints (Protected)
+
+| Method   | Endpoint                      | Description                               | Required Role         |
+| :------- | :---------------------------- | :---------------------------------------- | :-------------------- |
+| `POST`   | `/api/floors`                 | Creates a new parking floor.              | `PARKING_LOT_MANAGER` |
+| `POST`   | `/api/floors/{floorId}/slots` | Creates a new slot on a specific floor.   | `PARKING_LOT_MANAGER` |
+| `POST`   | `/api/reserve`                | Creates a new reservation.                | `USER`                |
+| `GET`    | `/api/availability`           | Gets available slots for a time range.    | Authenticated         |
+| `GET`    | `/api/reservations/{id}`      | Retrieves a specific reservation.         | `USER`                |
+| `DELETE` | `/api/reservations/{id}`      | Cancels a specific reservation.           | `USER`                |
 
 ---
 
 ## Local Setup & Run Instructions
 
 ### Prerequisites
+
 * Java JDK 17 or newer
 * Maven
 * A running instance of PostgreSQL
 
 ### Configuration
+
 1.  **Create Database:** Before running locally, ensure you have a PostgreSQL database created.
     ```sql
     CREATE DATABASE parking_lot_db;
@@ -65,6 +76,7 @@ The base URL for the deployed application is `https://parkinglotmanagement-1.onr
 2.  **Update Credentials:** Open the `src/main/resources/application.properties` file and update the `spring.datasource.url`, `username`, and `password` with your local PostgreSQL credentials.
 
 ### Running the Application
+
 1.  **Clone the repository:**
     ```bash
     git clone [https://github.com/lakshmidhar2006/ParkingLotManagement.git](https://github.com/lakshmidhar2006/ParkingLotManagement.git)
@@ -78,4 +90,5 @@ The base URL for the deployed application is `https://parkinglotmanagement-1.onr
     # For macOS/Linux
     ./mvnw spring-boot:run
     ```
+
 The application will start on `http://localhost:8080`.
