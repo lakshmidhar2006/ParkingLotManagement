@@ -1,5 +1,8 @@
 package com.parkinglotmanagement.parkinglotmanagement.exception;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -7,9 +10,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -49,6 +49,12 @@ public class GlobalExceptionHandler {
         error.put("error", "This slot was just booked by someone else. Please try another slot or time.");
         return new ResponseEntity<>(error, HttpStatus.CONFLICT); // 409 Conflict
     }
+    @ExceptionHandler(ParkingAPIException.class)
+public ResponseEntity<Object> handleParkingAPIException(ParkingAPIException ex) {
+    Map<String, String> error = new HashMap<>();
+    error.put("error", ex.getMessage());
+    return new ResponseEntity<>(error, ex.getStatus());
+}
 
     // Handles resource not found (custom exception)
     @ExceptionHandler(ResourceNotFoundException.class)
